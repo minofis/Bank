@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgresDb:
+    container_name: BankDb
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: BankDb
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgresql_data:

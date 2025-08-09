@@ -1,0 +1,6 @@
+bin
+.idea
+obj
+build
+.env
+.DS_Store
