@@ -12,16 +12,6 @@ namespace Bank.DAL.Configurations
                 .HasOne(t => t.Type)
                 .WithMany()
                 .HasForeignKey(t => t.TypeId);
-
-            builder
-                .HasOne(t => t.SenderAccount)
-                .WithMany(a => a.SentTransactions)
-                .HasForeignKey(t => t.SenderAccountId);
-
-            builder
-                .HasOne(t => t.RecipientAccount)
-                .WithMany(a => a.RecivedTransactions)
-                .HasForeignKey(t => t.RecipientAccountId);
         }
     }
 }

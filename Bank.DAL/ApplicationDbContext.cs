@@ -1,5 +1,6 @@
 using Bank.Core.Entities;
 using Bank.Core.Lookups;
+using Bank.DAL.Configurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bank.DAL
@@ -15,6 +16,16 @@ namespace Bank.DAL
         // Lookups
         public DbSet<TransactionType> TransactionTypes { get; set; }
 
-        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Entities
+            modelBuilder.ApplyConfiguration(new AccountConfiguration());
+            modelBuilder.ApplyConfiguration(new TransactionConfiguration());
+
+            // Lookups
+            modelBuilder.ApplyConfiguration(new TransactionTypeConfiguration());
+            
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

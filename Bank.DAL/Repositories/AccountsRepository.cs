@@ -12,24 +12,32 @@ namespace Bank.DAL.Repositories
             _context = context;
         }
 
-        public async Task CreateAccountAsync(Account account)
+        public async Task<List<Account>> GetAllAsync()
+        {
+            return await _context.Accounts
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task CreateAsync(Account account)
         {
             await _context.Accounts.AddAsync(account);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Account> GetAccountByIdAsync(Guid accountId)
+        public async Task<Account> GetByNumberAsync(string accountNumber)
         {
             return await _context.Accounts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.Id == accountId);
+                .FirstOrDefaultAsync(a => a.Number == accountNumber);
         }
 
-        public async Task<List<Account>> GetAllAcountsAsync()
+        public async Task<Account> GetByNumberLockedAsync(string accountNumber)
         {
             return await _context.Accounts
-                .AsNoTracking()
-                .ToListAsync();
+                .FromSqlInterpolated($"SELECT * FROM Accounts WHERE Number = {accountNumber} FOR UPDATE")
+                .AsTracking()
+                .FirstOrDefaultAsync();
         }
     }
 }

@@ -11,10 +11,9 @@ namespace Bank.DAL.Repositories
             _context = context;
         }
 
-        public async Task CreateTransactionAsync(Transaction transaction)
+        public async Task AddAsync(Transaction transaction)
         {
             await _context.Transactions.AddAsync(transaction);
-            await _context.SaveChangesAsync();
         }
     }
 }
