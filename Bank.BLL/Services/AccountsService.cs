@@ -21,14 +21,14 @@ namespace Bank.BLL.Services
             {
                 Id = Guid.NewGuid(),
                 CreatedAt = DateTime.UtcNow,
-                Number = GenerateAccountNumber(),
+                AccountNumber = GenerateAccountNumber(),
                 HolderName = holderName,
                 Balance = 0
             };
 
             await _accountsRepo.CreateAsync(account);
 
-            await _transactionsService.DepositFundsAsync(account.Number, initialBalance);
+            await _transactionsService.DepositFundsAsync(account.AccountNumber, initialBalance);
         }
 
         public async Task<List<Account>> GetAllAsync()

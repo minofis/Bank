@@ -29,7 +29,7 @@ namespace Bank.DAL.Repositories
         {
             return await _context.Accounts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.Number == accountNumber);
+                .FirstOrDefaultAsync(a => a.AccountNumber == accountNumber);
         }
 
         public async Task<Account> GetByNumberLockedAsync(string accountNumber)
