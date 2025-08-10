@@ -11,7 +11,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Database config
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString(nameof(ApplicationDbContext)));
+    options.UseNpgsql(builder.Configuration.GetConnectionString(nameof(ApplicationDbContext)),
+    npgsql =>
+    {
+        npgsql.MigrationsHistoryTable("__ef_migrations_history", "public");
+    })
+    .UseSnakeCaseNamingConvention();
 });
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
