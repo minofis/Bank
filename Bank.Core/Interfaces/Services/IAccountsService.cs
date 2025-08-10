@@ -4,8 +4,8 @@ namespace Bank.Core.Interfaces.Services
 {
     public interface IAccountsService
     {
-        Task<List<Account>> GetAllAsync();
-        Task<Account> GetByNumberAsync(string accountNumber);
-        Task CreateAsync(string holderName, decimal initialBalance);
+        Task<List<Account>> GetAllAsync(CancellationToken ct);
+        Task<Account> GetByNumberAsync(string accountNumber, CancellationToken ct);
+        Task CreateAsync(string holderName, decimal initialBalance, CancellationToken ct);
     }
 }

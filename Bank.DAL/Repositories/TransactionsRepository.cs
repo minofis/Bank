@@ -11,9 +11,9 @@ namespace Bank.DAL.Repositories
             _context = context;
         }
 
-        public async Task AddAsync(Transaction transaction)
+        public async Task AddAsync(Transaction transaction, CancellationToken ct = default)
         {
-            await _context.Transactions.AddAsync(transaction);
+            await _context.Transactions.AddAsync(transaction, ct);
         }
     }
 }

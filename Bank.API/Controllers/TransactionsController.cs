@@ -16,34 +16,37 @@ namespace Bank.API.Controllers
         }
 
         [HttpPost("transfer-funds")]
-        public async Task<IActionResult> TransferFunds([FromBody] TransferFundsRequestDto requestDto)
+        public async Task<IActionResult> TransferFunds([FromBody] TransferFundsRequestDto requestDto, CancellationToken ct = default)
         {
             await _transactionsService.TransferFundsAsync(
                 requestDto.SenderAccountNumber,
                 requestDto.RecipientAccountNumber,
                 requestDto.Amount,
-                requestDto.Description);
+                requestDto.Description,
+                ct);
 
             return Ok();
         }
 
         [HttpPost("withdraw-funds")]
-        public async Task<IActionResult> WithdrawFunds([FromBody] WithdrawFundsRequestDto requestDto)
+        public async Task<IActionResult> WithdrawFunds([FromBody] WithdrawFundsRequestDto requestDto, CancellationToken ct = default)
         {
             await _transactionsService.WithdrawFundsAsync(
                 requestDto.SenderAccountNumber,
-                requestDto.Amount
+                requestDto.Amount,
+                ct
             );
 
             return Ok();
         }
 
         [HttpPost("deposit-funds")]
-        public async Task<IActionResult> DepositFunds([FromBody] DepositFundsRequestDto requestDto)
+        public async Task<IActionResult> DepositFunds([FromBody] DepositFundsRequestDto requestDto, CancellationToken ct = default)
         {
             await _transactionsService.DepositFundsAsync(
                 requestDto.RecipientAccountNumber,
-                requestDto.Amount);
+                requestDto.Amount,
+                ct);
 
             return Ok();
         }

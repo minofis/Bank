@@ -12,32 +12,36 @@ namespace Bank.DAL.Repositories
             _context = context;
         }
 
-        public async Task<List<Account>> GetAllAsync()
+        public async Task<List<Account>> GetAllAsync(CancellationToken ct = default)
         {
             return await _context.Accounts
                 .AsNoTracking()
-                .ToListAsync();
+                .ToListAsync(ct);
         }
 
-        public async Task CreateAsync(Account account)
+        public async Task CreateAsync(Account account, CancellationToken ct = default)
         {
-            await _context.Accounts.AddAsync(account);
-            await _context.SaveChangesAsync();
+            await _context.Accounts.AddAsync(account, ct);
+            await _context.SaveChangesAsync(ct).ConfigureAwait(false);
         }
 
-        public async Task<Account> GetByNumberAsync(string accountNumber)
+        public async Task<Account> GetByNumberAsync(string accountNumber, CancellationToken ct = default)
         {
             return await _context.Accounts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.AccountNumber == accountNumber);
+                .FirstOrDefaultAsync(a => a.AccountNumber == accountNumber, ct);
         }
 
-        public async Task<Account> GetByNumberLockedAsync(string accountNumber)
+        public async Task<Account> GetByNumberLockedAsync(string accountNumber, CancellationToken ct = default)
         {
-            return await _context.Accounts
+            if (await _context.Accounts.AnyAsync(a => a.AccountNumber == accountNumber, ct))
+            {
+                return await _context.Accounts
                 .FromSqlInterpolated($"SELECT * FROM accounts WHERE account_number = {accountNumber} FOR UPDATE")
                 .AsTracking()
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(ct);
+            }
+            return null;
         }
     }
 }

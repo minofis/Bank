@@ -4,6 +4,6 @@ namespace Bank.Core.Interfaces.Repositories
 {
     public interface ITransactionsRepository
     {
-        Task AddAsync(Transaction transaction);
+        Task AddAsync(Transaction transaction, CancellationToken ct);
     }
 }

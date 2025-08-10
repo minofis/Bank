@@ -16,9 +16,9 @@ namespace Bank.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<AccountResponseDto>>> GetAllAccounts()
+        public async Task<ActionResult<List<AccountResponseDto>>> GetAllAccounts(CancellationToken ct = default)
         {
-            var accounts = await _accountsService.GetAllAsync();
+            var accounts = await _accountsService.GetAllAsync(ct);
 
             var accountResponseDtos = accounts.Select(account => new AccountResponseDto
             {
@@ -33,9 +33,9 @@ namespace Bank.API.Controllers
         }
 
         [HttpGet("by-number")]
-        public async Task<ActionResult<List<AccountResponseDto>>> GetAccountByNumber(string accountNumber)
+        public async Task<ActionResult<List<AccountResponseDto>>> GetAccountByNumber(string accountNumber, CancellationToken ct = default)
         {
-            var account = await _accountsService.GetByNumberAsync(accountNumber);
+            var account = await _accountsService.GetByNumberAsync(accountNumber, ct);
 
             var accountResponseDto = new AccountResponseDto
             {
@@ -50,9 +50,9 @@ namespace Bank.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<List<AccountResponseDto>>> CreateAccount([FromBody] AccountRequestDto requestDto)
+        public async Task<ActionResult<List<AccountResponseDto>>> CreateAccount([FromBody] AccountRequestDto requestDto, CancellationToken ct = default)
         {
-            await _accountsService.CreateAsync(requestDto.HolderName, requestDto.InitialBalance);
+            await _accountsService.CreateAsync(requestDto.HolderName, requestDto.InitialBalance, ct);
 
             return Ok();
         }

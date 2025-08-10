@@ -7,44 +7,46 @@ namespace Bank.BLL.Services
     public class AccountsService : IAccountsService
     {
         private readonly IAccountsRepository _accountsRepo;
-        private readonly ITransactionsService _transactionsService;
 
-        public AccountsService(IAccountsRepository accountsRepo, ITransactionsService transactionsService)
+        public AccountsService(IAccountsRepository accountsRepo)
         {
             _accountsRepo = accountsRepo;
-            _transactionsService = transactionsService;
         }
 
-        public async Task CreateAsync(string holderName, decimal initialBalance)
+        public async Task CreateAsync(string holderName, decimal initialBalance, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(holderName))
+                throw new ArgumentException("Holder name cannot be empty.");
+
+            if (initialBalance < 0)
+                throw new ArgumentException("Initial balance must be positive.");
+
             var account = new Account
             {
                 Id = Guid.NewGuid(),
                 CreatedAt = DateTime.UtcNow,
                 AccountNumber = GenerateAccountNumber(),
                 HolderName = holderName,
-                Balance = 0
+                Balance = initialBalance
             };
 
-            await _accountsRepo.CreateAsync(account);
-
-            await _transactionsService.DepositFundsAsync(account.AccountNumber, initialBalance);
+            await _accountsRepo.CreateAsync(account, ct);
         }
 
-        public async Task<List<Account>> GetAllAsync()
+        public async Task<List<Account>> GetAllAsync(CancellationToken ct = default)
         {
-            return await _accountsRepo.GetAllAsync();
+            return await _accountsRepo.GetAllAsync(ct);
         }
 
-        public async Task<Account> GetByNumberAsync(string accountNumber)
+        public async Task<Account> GetByNumberAsync(string accountNumber, CancellationToken ct = default)
         {
-            return await _accountsRepo.GetByNumberAsync(accountNumber)
+            return await _accountsRepo.GetByNumberAsync(accountNumber, ct)
                 ?? throw new ArgumentException($"Account with number {accountNumber} not found.");
         }
 
         private string GenerateAccountNumber()
         {
-            return "ACCT" + DateTime.Now.Ticks.ToString().Substring(0, 10);
+            return "ACCT" + Guid.NewGuid().ToString("N").Substring(0, 10).ToUpper();
         }
     }
 }

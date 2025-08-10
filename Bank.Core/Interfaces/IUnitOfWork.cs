@@ -7,8 +7,8 @@ namespace Bank.Core.Interfaces
     {
         IAccountsRepository Accounts { get; }
         ITransactionsRepository Transactions { get; }
-        Task CommitAsync();
-        Task RollbackAsync();
-        Task BeginTransactionAsync();
+        Task CommitAsync(CancellationToken ct);
+        Task RollbackAsync(CancellationToken ct);
+        Task BeginTransactionAsync(CancellationToken ct);
     }
 }

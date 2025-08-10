@@ -1,4 +1,3 @@
-using System.Data;
 using Bank.Core.Entities;
 using Bank.Core.Enums;
 using Bank.Core.Interfaces;
@@ -16,129 +15,163 @@ namespace Bank.BLL.Services
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
+        
+        private Transaction CreateTransaction(
+            TransactionTypes type,
+            string senderNumber,
+            string recipientNumber,
+            decimal amount,
+            string description)
+        {
+            return new Transaction
+            {
+                Id = Guid.NewGuid(),
+                TypeId = (int)type,
+                SenderAccountNumber = senderNumber,
+                RecipientAccountNumber = recipientNumber,
+                Timestamp = DateTime.UtcNow,
+                Amount = amount,
+                Description = description ?? type.ToString()
+            };
+        }
 
-        public async Task TransferFundsAsync(string senderNumber, string recipientNumber, decimal amount, string description)
+        public async Task TransferFundsAsync(
+            string senderNumber,
+            string recipientNumber,
+            decimal amount,
+            string description,
+            CancellationToken ct)
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync();
+                await _unitOfWork.BeginTransactionAsync(ct);
+
+                if (string.IsNullOrEmpty(senderNumber) || string.IsNullOrEmpty(recipientNumber))
+                    throw new ArgumentException("Account number cannot be empty.");
 
                 if (amount <= 0)
                     throw new ArgumentException("Transfer amount must be positive.");
 
                 if (senderNumber == recipientNumber)
-                    throw new ArgumentException("Cannot transfer funds to the same account.");
+                    throw new InvalidOperationException("Cannot transfer funds to the same account.");
 
                 // Lock both accounts for the duration of transaction
-                var sender = await _unitOfWork.Accounts.GetByNumberLockedAsync(senderNumber)
-                    ?? throw new ArgumentException($"Sender account {senderNumber} not found.");
+                var sender = await _unitOfWork.Accounts.GetByNumberLockedAsync(senderNumber, ct)
+                    ?? throw new InvalidOperationException($"Sender account {senderNumber} not found or could not be locked.");
 
-                var recipient = await _unitOfWork.Accounts.GetByNumberLockedAsync(recipientNumber)
-                    ?? throw new ArgumentException($"Recipient account {recipientNumber} not found.");
+                var recipient = await _unitOfWork.Accounts.GetByNumberLockedAsync(recipientNumber, ct)
+                    ?? throw new InvalidOperationException($"Recipient account {recipientNumber} not found or could not be locked.");
 
-                // Check sufficient funds with pessimistic locking
                 if (sender.Balance < amount)
-                    throw new ArgumentException("Insufficient funds.");
+                    throw new InvalidOperationException("Insufficient funds.");
 
                 // Perform transfer
                 sender.Balance -= amount;
                 recipient.Balance += amount;
 
                 // Record transaction
-                var transaction = new Transaction
-                {
-                    Id = Guid.NewGuid(),
-                    TypeId = (int)TransactionTypes.Transfer,
-                    SenderAccountNumber = senderNumber,
-                    RecipientAccountNumber = recipientNumber,
-                    Timestamp = DateTime.UtcNow,
-                    Amount = amount,
-                    Description = description ?? "Funds Transfer."
-                };
+                var transaction = CreateTransaction(
+                    TransactionTypes.Transfer,
+                    senderNumber,
+                    recipientNumber,
+                    amount,
+                    description);
 
-                await _unitOfWork.Transactions.AddAsync(transaction);
+                await _unitOfWork.Transactions.AddAsync(transaction, ct);
 
-                await _unitOfWork.CommitAsync();
+                await _unitOfWork.CommitAsync(ct);
+                _logger.LogInformation("Transfer completed: {Amount} from {Sender} to {Recipient}",
+                    amount, senderNumber, recipientNumber);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 _logger.LogError(ex, "Transfer failed from {Sender} to {Recipient}", senderNumber, recipientNumber);
                 throw;
             }
         }
 
-        public async Task WithdrawFundsAsync(string accountNumber, decimal amount)
+        public async Task WithdrawFundsAsync(string accountNumber, decimal amount, CancellationToken ct)
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync();
+                await _unitOfWork.BeginTransactionAsync(ct);
+
+                if (string.IsNullOrEmpty(accountNumber))
+                    throw new ArgumentException("Account number cannot be empty.");
 
                 if (amount <= 0)
                     throw new ArgumentException("Withdraw amount must be positive.");
 
-                var account = await _unitOfWork.Accounts.GetByNumberLockedAsync(accountNumber)
-                    ?? throw new ArgumentException($"Account {accountNumber} not found or could not be locked");
+                // Lock accounts for the duration of transaction
+                var account = await _unitOfWork.Accounts.GetByNumberLockedAsync(accountNumber, ct)
+                    ?? throw new InvalidOperationException($"Account {accountNumber} not found or could not be locked.");
 
                 if (account.Balance < amount)
-                    throw new ArgumentException("Insufficient funds.");
+                    throw new InvalidOperationException("Insufficient funds.");
 
+                // Perform withdraw
                 account.Balance -= amount;
 
-                var transaction = new Transaction
-                {
-                    Id = Guid.NewGuid(),
-                    TypeId = (int)TransactionTypes.Withdrawal,
-                    SenderAccountNumber = accountNumber,
-                    Timestamp = DateTime.UtcNow,
-                    Amount = amount,
-                    Description = "Funds Withdraw."
-                };
+                // Record transaction
+                var transaction = CreateTransaction(
+                    TransactionTypes.Withdrawal,
+                    accountNumber,
+                    null,
+                    amount,
+                    TransactionTypes.Withdrawal.ToString());
 
-                await _unitOfWork.Transactions.AddAsync(transaction);
+                await _unitOfWork.Transactions.AddAsync(transaction, ct);
 
-                await _unitOfWork.CommitAsync();
+                await _unitOfWork.CommitAsync(ct);
+                _logger.LogInformation("Withdraw completed: {Amount} from {Account}", 
+                    amount, accountNumber);
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackAsync();
-                _logger.LogError(ex, "Withdraw failed for {Sender}", accountNumber);
+                await _unitOfWork.RollbackAsync(ct);
+                _logger.LogError(ex, "Withdraw failed for {Account}", accountNumber);
                 throw;
             }
         }
 
-        public async Task DepositFundsAsync(string accountNumber, decimal amount)
+        public async Task DepositFundsAsync(string accountNumber, decimal amount, CancellationToken ct = default)
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync();
+                await _unitOfWork.BeginTransactionAsync(ct);
+
+                if (string.IsNullOrEmpty(accountNumber))
+                    throw new ArgumentException("Account number cannot be empty.");
 
                 if (amount <= 0)
                     throw new ArgumentException("Deposit amount must be positive.");
 
-                var account = await _unitOfWork.Accounts.GetByNumberLockedAsync(accountNumber)
-                    ?? throw new ArgumentException($"Account {accountNumber} not found or could not be locked");
+                // Lock accounts for the duration of transaction
+                var account = await _unitOfWork.Accounts.GetByNumberLockedAsync(accountNumber, ct)
+                    ?? throw new InvalidOperationException($"Account {accountNumber} not found or could not be locked");
 
+                // Perform withdraw
                 account.Balance += amount;
 
-                var transaction = new Transaction
-                {
-                    Id = Guid.NewGuid(),
-                    TypeId = (int)TransactionTypes.Deposit,
-                    RecipientAccountNumber = accountNumber,
-                    Timestamp = DateTime.UtcNow,
-                    Amount = amount,
-                    Description = "Funds Deposit."
-                };
+                // Record transaction
+                var transaction = CreateTransaction(
+                    TransactionTypes.Deposit,
+                    null,
+                    accountNumber,
+                    amount,
+                    TransactionTypes.Deposit.ToString());
 
-                await _unitOfWork.Transactions.AddAsync(transaction);
+                await _unitOfWork.Transactions.AddAsync(transaction, ct);
 
-                await _unitOfWork.CommitAsync();
+                await _unitOfWork.CommitAsync(ct);
+                _logger.LogInformation("Transfer completed: {Amount} to {Account}", 
+                    amount, accountNumber);
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackAsync();
-                _logger.LogError(ex, "Deposit failed for {Sender}", accountNumber);
+                await _unitOfWork.RollbackAsync(ct);
+                _logger.LogError(ex, "Deposit failed for {Account}", accountNumber);
                 throw;
             }
         }

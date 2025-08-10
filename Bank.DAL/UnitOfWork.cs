@@ -1,4 +1,3 @@
-using System.Data;
 using Bank.Core.Interfaces;
 using Bank.Core.Interfaces.Repositories;
 using Bank.DAL.Repositories;
@@ -10,6 +9,7 @@ namespace Bank.DAL
     {
         private readonly ApplicationDbContext _context;
         private IDbContextTransaction _transaction;
+        private bool _disposed;
 
         public IAccountsRepository Accounts { get; private set; }
         public ITransactionsRepository Transactions { get; private set; }
@@ -21,65 +21,91 @@ namespace Bank.DAL
             Transactions = new TransactionsRepository(_context);
         }
 
-        public async Task BeginTransactionAsync()
+        public async Task BeginTransactionAsync(CancellationToken ct = default)
         {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(UnitOfWork));
+
             if (_transaction != null)
-            {
-                throw new InvalidOperationException("A transaction is already in progress");
-            }
-            
-            _transaction = await _context.Database.BeginTransactionAsync();
+                throw new InvalidOperationException("A transaction is already in progress.");
+
+            _transaction = await _context.Database.BeginTransactionAsync(ct);
         }
 
-        public async Task CommitAsync()
+        public async Task CommitAsync(CancellationToken ct = default)
         {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(UnitOfWork));
+
+            if (_transaction == null)
+                throw new InvalidOperationException("No transaction to commit.");
             try
             {
-                if (_transaction == null)
-                {
-                    throw new InvalidOperationException("No transaction to commit");
-                }
-
-                await _context.SaveChangesAsync();
-                await _transaction.CommitAsync();
+                await _context.SaveChangesAsync(ct);
+                await _transaction.CommitAsync(ct);
             }
             catch
             {
-                await RollbackAsync();
+                await TryRollbackAsync(ct);
                 throw;
             }
             finally
             {
-                if (_transaction != null)
-                {
-                    await _transaction.DisposeAsync();
-                    _transaction = null;
-                }
+                await TryDisposeTransactionAsync();
             }
         }
 
-        public async Task RollbackAsync()
+        public async Task RollbackAsync(CancellationToken ct = default)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(UnitOfWork));
+
+            await TryRollbackAsync(ct);
+            await TryDisposeTransactionAsync();
+        }
+
+        private async Task TryRollbackAsync(CancellationToken ct = default)
         {
             try
             {
                 if (_transaction != null)
-                {
-                    await _transaction.RollbackAsync();
-                }
+                    await _transaction.RollbackAsync(ct);
             }
-            finally
+            catch
             {
-                if (_transaction != null)
-                {
-                    await _transaction.DisposeAsync();
-                    _transaction = null;
-                }
+                // Log the error but do not throw an exception
             }
         }
 
+        private async Task TryDisposeTransactionAsync()
+        {
+            if (_transaction != null && !_disposed)
+            {
+                await _transaction.DisposeAsync();
+                _transaction = null;
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (_disposed)
+                return;
+
+            try
+            {
+                await TryRollbackAsync();
+                await TryDisposeTransactionAsync();
+                await _context.DisposeAsync();
+            }
+            finally
+            {
+                _disposed = true;
+            }
+        }
+        
         public void Dispose()
         {
-            _context.Dispose();
+            DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
     }
 }
