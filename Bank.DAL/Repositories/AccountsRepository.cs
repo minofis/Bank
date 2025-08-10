@@ -35,7 +35,7 @@ namespace Bank.DAL.Repositories
         public async Task<Account> GetByNumberLockedAsync(string accountNumber)
         {
             return await _context.Accounts
-                .FromSqlInterpolated($"SELECT * FROM Accounts WHERE Number = {accountNumber} FOR UPDATE")
+                .FromSqlInterpolated($"SELECT * FROM accounts WHERE account_number = {accountNumber} FOR UPDATE")
                 .AsTracking()
                 .FirstOrDefaultAsync();
         }

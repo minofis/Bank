@@ -53,7 +53,7 @@ namespace Bank.BLL.Services
                     RecipientAccountNumber = recipientNumber,
                     Timestamp = DateTime.UtcNow,
                     Amount = amount,
-                    Description = description
+                    Description = description ?? "Funds Transfer."
                 };
 
                 await _unitOfWork.Transactions.AddAsync(transaction);
@@ -72,6 +72,8 @@ namespace Bank.BLL.Services
         {
             try
             {
+                await _unitOfWork.BeginTransactionAsync();
+
                 if (amount <= 0)
                     throw new ArgumentException("Withdraw amount must be positive.");
 
@@ -89,7 +91,8 @@ namespace Bank.BLL.Services
                     TypeId = (int)TransactionTypes.Withdrawal,
                     SenderAccountNumber = accountNumber,
                     Timestamp = DateTime.UtcNow,
-                    Amount = amount
+                    Amount = amount,
+                    Description = "Funds Withdraw."
                 };
 
                 await _unitOfWork.Transactions.AddAsync(transaction);
@@ -108,6 +111,8 @@ namespace Bank.BLL.Services
         {
             try
             {
+                await _unitOfWork.BeginTransactionAsync();
+
                 if (amount <= 0)
                     throw new ArgumentException("Deposit amount must be positive.");
 
@@ -122,7 +127,8 @@ namespace Bank.BLL.Services
                     TypeId = (int)TransactionTypes.Deposit,
                     RecipientAccountNumber = accountNumber,
                     Timestamp = DateTime.UtcNow,
-                    Amount = amount
+                    Amount = amount,
+                    Description = "Funds Deposit."
                 };
 
                 await _unitOfWork.Transactions.AddAsync(transaction);
