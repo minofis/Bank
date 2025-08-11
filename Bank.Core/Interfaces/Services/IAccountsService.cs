@@ -6,6 +6,6 @@ namespace Bank.Core.Interfaces.Services
     {
         Task<List<Account>> GetAllAsync(CancellationToken ct);
         Task<Account> GetByNumberAsync(string accountNumber, CancellationToken ct);
-        Task CreateAsync(string holderName, decimal initialBalance, CancellationToken ct);
+        Task<string> CreateAsync(string holderName, decimal initialBalance, CancellationToken ct);
     }
 }

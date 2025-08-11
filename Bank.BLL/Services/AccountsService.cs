@@ -14,7 +14,7 @@ namespace Bank.BLL.Services
             _accountsRepo = accountsRepo;
         }
 
-        public async Task CreateAsync(string holderName, decimal initialBalance, CancellationToken ct = default)
+        public async Task<string> CreateAsync(string holderName, decimal initialBalance, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(holderName))
                 throw new ArgumentException("Holder name cannot be empty.");
@@ -32,6 +32,8 @@ namespace Bank.BLL.Services
             };
 
             await _accountsRepo.CreateAsync(account, ct);
+
+            return account.AccountNumber;
         }
 
         public async Task<List<Account>> GetAllAsync(CancellationToken ct = default)

@@ -52,9 +52,9 @@ namespace Bank.API.Controllers
         [HttpPost]
         public async Task<ActionResult<List<AccountResponseDto>>> CreateAccount([FromBody] AccountRequestDto requestDto, CancellationToken ct = default)
         {
-            await _accountsService.CreateAsync(requestDto.HolderName, requestDto.InitialBalance, ct);
+            var accountNumber = await _accountsService.CreateAsync(requestDto.HolderName, requestDto.InitialBalance, ct);
 
-            return Ok(new {message = "Account is created successfully."});
+            return Ok(new {message = $"Account is created successfully with AccountNumber: {accountNumber}."});
         }
     }
 }
