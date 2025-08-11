@@ -1,6 +1,8 @@
 using Bank.Core.Entities;
 using Bank.Core.Enums;
+using Bank.Core.Exceptions;
 using Bank.Core.Interfaces;
+using Bank.Core.Interfaces.Repositories;
 using Bank.Core.Interfaces.Services;
 using Microsoft.Extensions.Logging;
 
@@ -10,10 +12,20 @@ namespace Bank.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<TransactionsService> _logger;
-        public TransactionsService(IUnitOfWork unitOfWork, ILogger<TransactionsService> logger)
+        private readonly ITransactionsRepository _transactionsRepo;
+        public TransactionsService(
+            IUnitOfWork unitOfWork,
+            ILogger<TransactionsService> logger,
+            ITransactionsRepository transactionsRepo)
         {
             _unitOfWork = unitOfWork;
+            _transactionsRepo = transactionsRepo;
             _logger = logger;
+        }
+
+        public async Task<List<Transaction>> GetAllAsync(CancellationToken ct = default)
+        {
+            return await _transactionsRepo.GetAllAsync(ct);
         }
         
         private Transaction CreateTransaction(
@@ -53,17 +65,17 @@ namespace Bank.BLL.Services
                     throw new ArgumentException("Transfer amount must be positive.");
 
                 if (senderNumber == recipientNumber)
-                    throw new InvalidOperationException("Cannot transfer funds to the same account.");
+                    throw new ArgumentException("Cannot transfer funds to the same account.");
 
                 // Lock both accounts for the duration of transaction
                 var sender = await _unitOfWork.Accounts.GetByNumberLockedAsync(senderNumber, ct)
-                    ?? throw new InvalidOperationException($"Sender account {senderNumber} not found or could not be locked.");
+                    ?? throw new NotFoundException($"Sender account {senderNumber} not found or could not be locked.");
 
                 var recipient = await _unitOfWork.Accounts.GetByNumberLockedAsync(recipientNumber, ct)
-                    ?? throw new InvalidOperationException($"Recipient account {recipientNumber} not found or could not be locked.");
+                    ?? throw new NotFoundException($"Recipient account {recipientNumber} not found or could not be locked.");
 
                 if (sender.Balance < amount)
-                    throw new InvalidOperationException("Insufficient funds.");
+                    throw new InsufficientFundsException("Insufficient funds.");
 
                 // Perform transfer
                 sender.Balance -= amount;
@@ -105,10 +117,10 @@ namespace Bank.BLL.Services
 
                 // Lock accounts for the duration of transaction
                 var account = await _unitOfWork.Accounts.GetByNumberLockedAsync(accountNumber, ct)
-                    ?? throw new InvalidOperationException($"Account {accountNumber} not found or could not be locked.");
+                    ?? throw new NotFoundException($"Account {accountNumber} not found or could not be locked.");
 
                 if (account.Balance < amount)
-                    throw new InvalidOperationException("Insufficient funds.");
+                    throw new InsufficientFundsException("Insufficient funds.");
 
                 // Perform withdraw
                 account.Balance -= amount;
@@ -149,7 +161,7 @@ namespace Bank.BLL.Services
 
                 // Lock accounts for the duration of transaction
                 var account = await _unitOfWork.Accounts.GetByNumberLockedAsync(accountNumber, ct)
-                    ?? throw new InvalidOperationException($"Account {accountNumber} not found or could not be locked");
+                    ?? throw new NotFoundException($"Account {accountNumber} not found or could not be locked");
 
                 // Perform withdraw
                 account.Balance += amount;

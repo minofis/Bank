@@ -1,3 +1,4 @@
+using Bank.API.MIddleware;
 using Bank.BLL.Services;
 using Bank.Core.Interfaces;
 using Bank.Core.Interfaces.Repositories;
@@ -32,6 +33,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 

@@ -1,7 +1,10 @@
+using Bank.Core.Entities;
+
 namespace Bank.Core.Interfaces.Services
 {
     public interface ITransactionsService
     {
+        Task<List<Transaction>> GetAllAsync(CancellationToken ct);
         Task TransferFundsAsync(string senderNumber, string recipientNumber, decimal amount, string description, CancellationToken ct);
         Task WithdrawFundsAsync(string senderNumber, decimal amount, CancellationToken ct);
         Task DepositFundsAsync(string recipientNumber, decimal amount, CancellationToken ct);

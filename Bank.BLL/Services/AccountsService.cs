@@ -1,4 +1,5 @@
 using Bank.Core.Entities;
+using Bank.Core.Exceptions;
 using Bank.Core.Interfaces.Repositories;
 using Bank.Core.Interfaces.Services;
 
@@ -41,7 +42,7 @@ namespace Bank.BLL.Services
         public async Task<Account> GetByNumberAsync(string accountNumber, CancellationToken ct = default)
         {
             return await _accountsRepo.GetByNumberAsync(accountNumber, ct)
-                ?? throw new ArgumentException($"Account with number {accountNumber} not found.");
+                ?? throw new NotFoundException($"Account with number {accountNumber} not found.");
         }
 
         private string GenerateAccountNumber()

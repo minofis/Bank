@@ -26,7 +26,7 @@ namespace Bank.API.Controllers
                 AccountNumber = account.AccountNumber,
                 HolderName = account.HolderName,
                 Balance = account.Balance,
-                CreatedAt = account.CreatedAt.ToString()
+                CreatedAt = account.CreatedAt.ToString("o")
             }).ToList();
 
             return Ok(accountResponseDtos);
@@ -54,7 +54,7 @@ namespace Bank.API.Controllers
         {
             await _accountsService.CreateAsync(requestDto.HolderName, requestDto.InitialBalance, ct);
 
-            return Ok();
+            return Ok(new {message = "Account is created successfully."});
         }
     }
 }

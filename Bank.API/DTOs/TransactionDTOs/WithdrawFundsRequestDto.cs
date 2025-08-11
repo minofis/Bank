@@ -2,7 +2,7 @@ namespace Bank.API.DTOs.TransactionDTOs
 {
     public class WithdrawFundsRequestDto
     {
-        public string? SenderAccountNumber { get; set; }
+        public string? AccountNumber { get; set; }
         public decimal Amount { get; set; }
     }
 }
