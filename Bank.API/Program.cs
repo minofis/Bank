@@ -33,12 +33,36 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+// Database migrations setup
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(); 
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        if (dbContext.Database.CanConnect())
+        {
+            logger.LogInformation("✅ PostgreSQL: connection successful.");
+            dbContext.Database.Migrate();
+        }
+        else
+            logger.LogError("❌ PostgreSQL: connection failed.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "❌ PostgreSQL connection error.");
+    }
 }
 
-app.UseHttpsRedirection();
+app.UseSwagger();
+app.UseSwaggerUI();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.MapControllers();
 app.Run();

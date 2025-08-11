@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgresDb:
+    container_name: BankDb
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: BankDb
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d BankDb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__ApplicationDbContext=Host=postgresDb;Port=5432;Database=BankDb;Username=root;Password=root
+    depends_on:
+      postgresDb:
+        condition: service_healthy
+
+volumes:
+  postgresql_data:
