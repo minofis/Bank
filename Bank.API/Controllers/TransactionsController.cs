@@ -37,6 +37,11 @@ namespace Bank.API.Controllers
         [HttpPost("transfer-funds")]
         public async Task<IActionResult> TransferFunds([FromBody] TransferFundsRequestDto requestDto, CancellationToken ct = default)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             await _transactionsService.TransferFundsAsync(
                 requestDto.SenderAccountNumber,
                 requestDto.RecipientAccountNumber,

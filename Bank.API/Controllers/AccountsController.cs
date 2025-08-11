@@ -33,9 +33,14 @@ namespace Bank.API.Controllers
         }
 
         [HttpGet("by-number")]
-        public async Task<ActionResult<List<AccountResponseDto>>> GetAccountByNumber(string accountNumber, CancellationToken ct = default)
+        public async Task<ActionResult<AccountResponseDto>> GetAccountByNumber(string accountNumber, CancellationToken ct = default)
         {
             var account = await _accountsService.GetByNumberAsync(accountNumber, ct);
+
+            if (account == null)
+            {
+                return NotFound($"Account with number {accountNumber} not found.");
+            }
 
             var accountResponseDto = new AccountResponseDto
             {
@@ -52,6 +57,11 @@ namespace Bank.API.Controllers
         [HttpPost]
         public async Task<ActionResult<List<AccountResponseDto>>> CreateAccount([FromBody] AccountRequestDto requestDto, CancellationToken ct = default)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var accountNumber = await _accountsService.CreateAsync(requestDto.HolderName, requestDto.InitialBalance, ct);
 
             return Ok(new {message = $"Account is created successfully with AccountNumber: {accountNumber}."});
