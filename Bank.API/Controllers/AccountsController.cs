@@ -1,6 +1,7 @@
 using Bank.API.DTOs;
 using Bank.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Bank.API.Controllers
 {
@@ -15,7 +16,11 @@ namespace Bank.API.Controllers
             _accountsService = accountsService;
         }
 
+
         [HttpGet]
+        [SwaggerOperation(
+            Summary = "Retrieve all accounts",
+            Description = "Returns a list of all accounts in the system.")]
         public async Task<ActionResult<List<AccountResponseDto>>> GetAllAccounts(CancellationToken ct = default)
         {
             var accounts = await _accountsService.GetAllAsync(ct);
@@ -33,6 +38,9 @@ namespace Bank.API.Controllers
         }
 
         [HttpGet("by-number")]
+        [SwaggerOperation(
+            Summary = "Retrieve account details",
+            Description = "Fetches complete account information for the specified account number")]
         public async Task<ActionResult<AccountResponseDto>> GetAccountByNumber(string accountNumber, CancellationToken ct = default)
         {
             var account = await _accountsService.GetByNumberAsync(accountNumber, ct);
@@ -55,6 +63,9 @@ namespace Bank.API.Controllers
         }
 
         [HttpPost]
+        [SwaggerOperation(
+            Summary = "Create a new bank account",
+            Description = "Creates a new account with the specified holder name and initial balance.")]
         public async Task<ActionResult<List<AccountResponseDto>>> CreateAccount([FromBody] AccountRequestDto requestDto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)

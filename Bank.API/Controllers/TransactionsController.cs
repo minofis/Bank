@@ -1,6 +1,7 @@
 using Bank.API.DTOs.TransactionDTOs;
 using Bank.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Bank.API.Controllers
 {
@@ -16,6 +17,9 @@ namespace Bank.API.Controllers
         }
 
         [HttpGet]
+            [SwaggerOperation(
+            Summary = "Retrieve all transactions",
+            Description = "Returns a list of all transactions in the system.")]
         public async Task<ActionResult<List<TransactionResponseDto>>> GetAllTransactions(CancellationToken ct = default)
         {
             var transactions = await _transactionsService.GetAllAsync(ct);
@@ -35,6 +39,9 @@ namespace Bank.API.Controllers
         }
 
         [HttpPost("transfer-funds")]
+        [SwaggerOperation(
+            Summary = "Transfer funds between two accounts",
+            Description = "Performs a secure transfer of specified amount from one account to another.")]
         public async Task<IActionResult> TransferFunds([FromBody] TransferFundsRequestDto requestDto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -58,6 +65,9 @@ namespace Bank.API.Controllers
         }
 
         [HttpPost("withdraw-funds")]
+        [SwaggerOperation(
+            Summary = "Withdraw funds from account",
+            Description = "Processes a withdrawal transaction from the specified account.")]
         public async Task<IActionResult> WithdrawFunds([FromBody] WithdrawFundsRequestDto requestDto, CancellationToken ct = default)
         {
             await _transactionsService.WithdrawFundsAsync(
@@ -69,11 +79,14 @@ namespace Bank.API.Controllers
             return Ok(new
             {
                 message = $"Withdraw completed: {requestDto.Amount}$ " +
-                          $"from {requestDto.AccountNumber} "
+                          $"from {requestDto.AccountNumber}"
             });
         }
 
         [HttpPost("deposit-funds")]
+        [SwaggerOperation(
+            Summary = "Deposit funds to account",
+            Description = "Processes a deposit transaction to the specified account.")]
         public async Task<IActionResult> DepositFunds([FromBody] DepositFundsRequestDto requestDto, CancellationToken ct = default)
         {
             await _transactionsService.DepositFundsAsync(
@@ -84,7 +97,7 @@ namespace Bank.API.Controllers
             return Ok(new
             {
                 message = $"Deposit completed: {requestDto.Amount}$ " +
-                          $"to {requestDto.AccountNumber} "
+                          $"to {requestDto.AccountNumber}"
             });
         }
     }
