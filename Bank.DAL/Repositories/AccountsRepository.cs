@@ -32,6 +32,7 @@ namespace Bank.DAL.Repositories
                 .FirstOrDefaultAsync(a => a.AccountNumber == accountNumber, ct);
         }
 
+        // Operation to avoid "data races" during transactions
         public async Task<Account> GetByNumberLockedAsync(string accountNumber, CancellationToken ct = default)
         {
             if (await _context.Accounts.AnyAsync(a => a.AccountNumber == accountNumber, ct))

@@ -1,5 +1,6 @@
 namespace Bank.Core.Lookups
 {
+    // Lookup for database table
     public class TransactionType
     {
         public int Id { get; set; }

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database config
+// Database connection config
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString(nameof(ApplicationDbContext)),
@@ -30,6 +30,7 @@ builder.Services.AddScoped<ITransactionsService, TransactionsService>();
 
 builder.Services.AddEndpointsApiExplorer();
 
+// Swagger configuration
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
@@ -66,7 +67,6 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
-
 
 if (app.Environment.IsDevelopment())
 {

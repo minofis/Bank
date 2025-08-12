@@ -56,6 +56,7 @@ namespace Bank.BLL.Services
         {
             try
             {
+                // Start DB transaction
                 await _unitOfWork.BeginTransactionAsync(ct);
 
                 if (string.IsNullOrEmpty(senderNumber) || string.IsNullOrEmpty(recipientNumber))
@@ -91,6 +92,7 @@ namespace Bank.BLL.Services
 
                 await _unitOfWork.Transactions.AddAsync(transaction, ct);
 
+                // Commit transaction to DB
                 await _unitOfWork.CommitAsync(ct);
                 _logger.LogInformation("Transfer completed: {Amount} from {Sender} to {Recipient}",
                     amount, senderNumber, recipientNumber);
@@ -107,6 +109,7 @@ namespace Bank.BLL.Services
         {
             try
             {
+                // Start DB transaction
                 await _unitOfWork.BeginTransactionAsync(ct);
 
                 if (string.IsNullOrEmpty(accountNumber))
@@ -135,6 +138,7 @@ namespace Bank.BLL.Services
 
                 await _unitOfWork.Transactions.AddAsync(transaction, ct);
 
+                // Commit transaction to DB
                 await _unitOfWork.CommitAsync(ct);
                 _logger.LogInformation("Withdraw completed: {Amount} from {Account}", 
                     amount, accountNumber);
@@ -151,6 +155,7 @@ namespace Bank.BLL.Services
         {
             try
             {
+                // Start DB transaction
                 await _unitOfWork.BeginTransactionAsync(ct);
 
                 if (string.IsNullOrEmpty(accountNumber))
@@ -176,6 +181,7 @@ namespace Bank.BLL.Services
 
                 await _unitOfWork.Transactions.AddAsync(transaction, ct);
 
+                // Commit transaction to DB
                 await _unitOfWork.CommitAsync(ct);
                 _logger.LogInformation("Transfer completed: {Amount} to {Account}", 
                     amount, accountNumber);

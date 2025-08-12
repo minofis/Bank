@@ -19,7 +19,6 @@ namespace Bank.DAL
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Entities
-            modelBuilder.ApplyConfiguration(new AccountConfiguration());
             modelBuilder.ApplyConfiguration(new TransactionConfiguration());
 
             // Lookups
